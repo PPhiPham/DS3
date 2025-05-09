@@ -2,3 +2,5 @@ venv/
 data/
 *.csvdata/product_descriptions.csv
 data/attributes.csv
+data/product_descriptions.csv
+data/attributes.csv

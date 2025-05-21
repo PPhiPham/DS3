@@ -15,6 +15,55 @@ df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")
 df_pro_desc = pd.read_csv('data/product_descriptions.csv', encoding="ISO-8859-1")
 print("Datasets loaded.")
 
+print("Datasets loaded.")
+
+# === Analysis Tasks ===
+print("\n--- Data Analysis Tasks ---")
+
+# 1. Total number of product-query pairs
+num_pairs = df_train.shape[0]
+print(f"1. Total product-query pairs: {num_pairs}")
+
+# 2. Number of unique products
+unique_products = df_train['product_uid'].nunique()
+print(f"2. Unique products: {unique_products}")
+
+# 3. Top 2 most occurring products
+top_products = df_train['product_uid'].value_counts().head(2)
+print("3. Top 2 most occurring products:")
+for pid, count in top_products.items():
+    print(f"   - Product UID {pid}: {count} occurrences")
+
+# 4. Descriptive stats for relevance
+mean_rel = df_train['relevance'].mean()
+median_rel = df_train['relevance'].median()
+std_rel = df_train['relevance'].std()
+print(f"4. Relevance stats -> Mean: {mean_rel:.2f}, Median: {median_rel:.2f}, Std: {std_rel:.2f}")
+
+# 5. Histogram and boxplot
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(10, 4))
+plt.subplot(1, 2, 1)
+sns.histplot(df_train['relevance'], bins=20, kde=True)
+plt.title("Histogram of Relevance")
+
+plt.subplot(1, 2, 2)
+sns.boxplot(x=df_train['relevance'])
+plt.title("Boxplot of Relevance")
+
+plt.tight_layout()
+plt.show()
+
+# 6. Top-5 most common brand names in attributes
+df_attr = pd.read_csv('data/attributes.csv', encoding="ISO-8859-1")
+brand_names = df_attr[df_attr['name'].str.lower() == 'brand_name']
+top_brands = brand_names['value'].value_counts().head(5)
+print("6. Top-5 most common brand names:")
+for brand, count in top_brands.items():
+    print(f"   - {brand}: {count} occurrences")
+    
 num_train = df_train.shape[0]
 
 # Caching stemmed words

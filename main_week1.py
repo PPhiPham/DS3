@@ -57,13 +57,15 @@ plt.tight_layout()
 plt.show()
 
 # 6. Top-5 most common brand names in attributes
-df_attr = pd.read_csv('data/attributes.csv', encoding="ISO-8859-1")
-brand_names = df_attr[df_attr['name'].str.lower() == 'brand_name']
+df_attr = pd.read_csv('data/attributes.csv', encoding='ISO-8859-1')
+df_attr['name'] = df_attr['name'].str.strip().str.lower()
+brand_names = df_attr[df_attr['name'].str.contains('brand name', na=False)]
 top_brands = brand_names['value'].value_counts().head(5)
-print("6. Top-5 most common brand names:")
+
+print("5. Top 5 most common brand names:")
 for brand, count in top_brands.items():
     print(f"   - {brand}: {count} occurrences")
-    
+
 num_train = df_train.shape[0]
 
 # Caching stemmed words

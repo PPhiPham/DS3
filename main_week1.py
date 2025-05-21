@@ -4,45 +4,42 @@ from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
 from nltk.stem.snowball import SnowballStemmer
 from tqdm import tqdm
 from functools import lru_cache
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Init tqdm and stemmer
 tqdm.pandas()
 stemmer = SnowballStemmer('english')
 
-print("Loading datasets...")
+print("Load datasets")
 df_train = pd.read_csv('data/train.csv', encoding="ISO-8859-1")
 df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")
 df_pro_desc = pd.read_csv('data/product_descriptions.csv', encoding="ISO-8859-1")
-print("Datasets loaded.")
+print("Datasets loaded")
 
-print("Datasets loaded.")
+# Analysis Tasks
+print("\n############## Data Analysis Tasks ##############")
 
-# === Analysis Tasks ===
-print("\n--- Data Analysis Tasks ---")
-
-# 1. Total number of product-query pairs
+# 1. Product-query pairs
 num_pairs = df_train.shape[0]
 print(f"1. Total product-query pairs: {num_pairs}")
 
-# 2. Number of unique products
+# 2. Unique products
 unique_products = df_train['product_uid'].nunique()
 print(f"2. Unique products: {unique_products}")
 
-# 3. Top 2 most occurring products
+# 3. Top 2 most occurring
 top_products = df_train['product_uid'].value_counts().head(2)
 print("3. Top 2 most occurring products:")
 for pid, count in top_products.items():
     print(f"   - Product UID {pid}: {count} occurrences")
 
-# 4. Descriptive stats for relevance
+# 4. Mean/Median/Std
 mean_rel = df_train['relevance'].mean()
 median_rel = df_train['relevance'].median()
 std_rel = df_train['relevance'].std()
 print(f"4. Relevance stats -> Mean: {mean_rel:.2f}, Median: {median_rel:.2f}, Std: {std_rel:.2f}")
 
-# 5. Histogram and boxplot
-import matplotlib.pyplot as plt
-import seaborn as sns
+# 5. Plot
 
 plt.figure(figsize=(10, 4))
 plt.subplot(1, 2, 1)
@@ -56,7 +53,7 @@ plt.title("Boxplot of Relevance")
 plt.tight_layout()
 plt.show()
 
-# 6. Top-5 most common brand names in attributes
+# 6. Top-5 brands
 df_attr = pd.read_csv('data/attributes.csv', encoding='ISO-8859-1')
 df_attr['name'] = df_attr['name'].str.strip().str.lower()
 brand_names = df_attr[df_attr['name'].str.contains('brand name', na=False)]
@@ -68,7 +65,6 @@ for brand, count in top_brands.items():
 
 num_train = df_train.shape[0]
 
-# Caching stemmed words
 @lru_cache(maxsize=10000)
 def cached_stem(word):
     return stemmer.stem(word)

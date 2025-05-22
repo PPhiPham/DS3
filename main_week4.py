@@ -9,23 +9,19 @@ from nltk.stem.snowball import SnowballStemmer
 from tqdm import tqdm
 from functools import lru_cache
 
-# Initialize
 tqdm.pandas()
 stemmer = SnowballStemmer('english')
 
-# Load datasets
 df_train = pd.read_csv('data/train.csv', encoding="ISO-8859-1")
 df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")
 df_pro_desc = pd.read_csv('data/product_descriptions.csv', encoding="ISO-8859-1")
 df_attr = pd.read_csv('data/attributes.csv', encoding="ISO-8859-1")
 
-# Stemming and helpers
 @lru_cache(maxsize=10000)
 def cached_stem(word): return stemmer.stem(word)
 def fast_stem_sentence(s): return " ".join([cached_stem(w) for w in str(s).lower().split()])
 def str_common_word(str1, str2): return sum(int(str2.find(word) >= 0) for word in str1.split())
 
-# Merge and preprocess
 df_attr_grouped = df_attr.groupby("product_uid")["value"].apply(lambda x: " ".join(x.astype(str))).reset_index()
 df_attr_grouped.columns = ['product_uid', 'attr_values']
 df_all = pd.concat((df_train, df_test), axis=0, ignore_index=True)
@@ -54,7 +50,6 @@ df_all['tfidf_cosine_sim'] = [
 
 df_all.drop(['search_term', 'product_title', 'product_description', 'product_info', 'attr_values'], axis=1, inplace=True)
 
-# Split and prepare
 num_train = df_train.shape[0]
 df_combined_train = df_all.iloc[:num_train].copy()
 y = df_combined_train['relevance'].values
@@ -70,7 +65,6 @@ rf_direct = RandomForestRegressor(
     random_state=0
 )
 
-# Train and inspect importances
 rf_direct.fit(X_train, y_train)
 feature_names = df_combined_train.drop(['id', 'relevance'], axis=1).columns
 importances = rf_direct.feature_importances_

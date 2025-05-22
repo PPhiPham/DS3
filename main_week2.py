@@ -9,11 +9,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Initialize tqdm and stemmer
 tqdm.pandas()
 stemmer = SnowballStemmer('english')
 
-# Load datasets
 print("Loading datasets...")
 df_train = pd.read_csv('data/train.csv', encoding="ISO-8859-1")
 df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")

@@ -6,6 +6,8 @@ from tqdm import tqdm
 from functools import lru_cache
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import root_mean_squared_error
 
 tqdm.pandas()
 stemmer = SnowballStemmer('english')
@@ -16,30 +18,23 @@ df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")
 df_pro_desc = pd.read_csv('data/product_descriptions.csv', encoding="ISO-8859-1")
 print("Datasets loaded")
 
-# Analysis Tasks
 print("\n############## Data Analysis Tasks ##############")
 
-# 1. Product-query pairs
 num_pairs = df_train.shape[0]
 print(f"1. Total product-query pairs: {num_pairs}")
 
-# 2. Unique products
 unique_products = df_train['product_uid'].nunique()
 print(f"2. Unique products: {unique_products}")
 
-# 3. Top 2 most occurring
 top_products = df_train['product_uid'].value_counts().head(2)
 print("3. Top 2 most occurring products:")
 for pid, count in top_products.items():
     print(f"   - Product UID {pid}: {count} occurrences")
 
-# 4. Mean/Median/Std
 mean_rel = df_train['relevance'].mean()
 median_rel = df_train['relevance'].median()
 std_rel = df_train['relevance'].std()
 print(f"4. Relevance stats -> Mean: {mean_rel:.2f}, Median: {median_rel:.2f}, Std: {std_rel:.2f}")
-
-# 5. Plot
 
 plt.figure(figsize=(10, 4))
 plt.subplot(1, 2, 1)
@@ -53,7 +48,6 @@ plt.title("Boxplot of Relevance")
 plt.tight_layout()
 plt.show()
 
-# 6. Top-5 brands
 df_attr = pd.read_csv('data/attributes.csv', encoding='ISO-8859-1')
 df_attr['name'] = df_attr['name'].str.strip().str.lower()
 brand_names = df_attr[df_attr['name'].str.contains('brand name', na=False)]
@@ -106,13 +100,23 @@ X_train = df_train.drop(['id', 'relevance'], axis=1).values
 X_test = df_test.drop(['id', 'relevance'], axis=1).values
 print("Data split complete.")
 
-print("Training model...")
+print("Splitting training set into train/validation for RMSE...")
+X_tr, X_val, y_tr, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+print("Training model on train split...")
 rf = RandomForestRegressor(n_estimators=15, max_depth=6, random_state=0)
 clf = BaggingRegressor(rf, n_estimators=45, max_samples=0.1, random_state=25)
-clf.fit(X_train, y_train)
-print("Model training complete.")
+clf.fit(X_tr, y_tr)
 
-print("Generating predictions...")
+print("Predicting on validation set...")
+y_val_pred = clf.predict(X_val)
+rmse = root_mean_squared_error(y_val, y_val_pred)
+print(f"Validation RMSE: {rmse:.4f}")
+
+print("Retraining model on full training data...")
+clf.fit(X_train, y_train)
+
+print("Generating predictions on test set...")
 y_pred = clf.predict(X_test)
 
 print("Saving submission file...")

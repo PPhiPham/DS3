@@ -10,11 +10,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Initialize tqdm and stemmer
 tqdm.pandas()
 stemmer = SnowballStemmer('english')
 
-# Load datasets
 print("Loading datasets...")
 df_train = pd.read_csv('data/train.csv', encoding="ISO-8859-1")
 df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")
@@ -86,7 +84,6 @@ X_test = df_test.drop(['id', 'relevance'], axis=1).values
 print("Creating train-validation split...")
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Define the models to compare
 models = {
     "RandomForestRegressor": RandomForestRegressor(n_estimators=15, max_depth=6, random_state=0),
     "GradientBoostingRegressor": GradientBoostingRegressor(n_estimators=15, max_depth=6, random_state=0),
@@ -97,20 +94,24 @@ models = {
 results = []
 
 for name, model in models.items():
-    print(f"\nTraining {name} with BaggingRegressor meta-estimator...")
-    bagging = BaggingRegressor(model, n_estimators=45, max_samples=0.1, random_state=25)
+    print(f"\nTraining {name} with BaggingRegressor meta-estimator..." if name != "HistGradientBoostingRegressor" else f"\nTraining {name}...")
+    if name == "HistGradientBoostingRegressor":
+        bagging = model
+    else:
+        bagging = BaggingRegressor(model, n_estimators=45, max_samples=0.1, random_state=25)
+
     start_time = time.time()
     bagging.fit(X_train, y_train)
     train_time = time.time() - start_time
-    
+
     start_time = time.time()
     y_val_pred = bagging.predict(X_val)
     pred_time = time.time() - start_time
-    
+
     rmse = np.sqrt(mean_squared_error(y_val, y_val_pred))
     print(f"{name} RMSE: {rmse:.4f}")
     print(f"{name} training time: {train_time:.2f}s, prediction time: {pred_time:.2f}s")
-    
+
     results.append({
         "model": name,
         "rmse": rmse,
@@ -119,7 +120,6 @@ for name, model in models.items():
         "model_obj": bagging,
     })
 
-# Select best model based on RMSE
 best_model = min(results, key=lambda x: x['rmse'])
 print(f"\nBest model by RMSE: {best_model['model']} with RMSE={best_model['rmse']:.4f}")
 

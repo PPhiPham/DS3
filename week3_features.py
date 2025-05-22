@@ -84,7 +84,7 @@ print("TF-IDF cosine similarity calculated.")
 
 print("Dropping text columns...")
 df_all.drop(['search_term', 'product_title', 'product_description', 'product_info', 'attr_values',
-             'search_num_units', 'desc_num_units', 'title_num_units'], axis=1, inplace=True)  # <-- Also drop new temp lists
+             'search_num_units', 'desc_num_units', 'title_num_units'], axis=1, inplace=True) 
 
 print("Splitting data...")
 df_train = df_all.iloc[:num_train]

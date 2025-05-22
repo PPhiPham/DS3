@@ -18,16 +18,16 @@ df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")
 df_pro_desc = pd.read_csv('data/product_descriptions.csv', encoding="ISO-8859-1")
 print("Datasets loaded")
 
-print("\n############## Data Analysis Tasks ##############")
+print("\n############## Data Exploration ##############")
 
 num_pairs = df_train.shape[0]
 print(f"1. Total product-query pairs: {num_pairs}")
 
 unique_products = df_train['product_uid'].nunique()
-print(f"2. Unique products: {unique_products}")
+print(f"2. Total Unique products: {unique_products}")
 
-top_products = df_train['product_uid'].value_counts().head(2)
-print("3. Top 2 most occurring products:")
+top_products = df_train['product_uid'].value_counts().head(5)
+print("3. Top 5 most occurring products:")
 for pid, count in top_products.items():
     print(f"   - Product UID {pid}: {count} occurrences")
 
@@ -35,18 +35,6 @@ mean_rel = df_train['relevance'].mean()
 median_rel = df_train['relevance'].median()
 std_rel = df_train['relevance'].std()
 print(f"4. Relevance stats -> Mean: {mean_rel:.2f}, Median: {median_rel:.2f}, Std: {std_rel:.2f}")
-
-plt.figure(figsize=(10, 4))
-plt.subplot(1, 2, 1)
-sns.histplot(df_train['relevance'], bins=20, kde=True)
-plt.title("Histogram of Relevance")
-
-plt.subplot(1, 2, 2)
-sns.boxplot(x=df_train['relevance'])
-plt.title("Boxplot of Relevance")
-
-plt.tight_layout()
-plt.show()
 
 df_attr = pd.read_csv('data/attributes.csv', encoding='ISO-8859-1')
 df_attr['name'] = df_attr['name'].str.strip().str.lower()
@@ -94,6 +82,20 @@ print("Splitting back to train/test sets...")
 df_train = df_all.iloc[:num_train]
 df_test = df_all.iloc[num_train:]
 id_test = df_test['id']
+
+plt.figure(figsize=(10, 4))
+plt.subplot(1, 2, 1)
+sns.histplot(df_train['relevance'], bins=20, kde=True)
+plt.title("Histogram of Relevance")
+
+plt.subplot(1, 2, 2)
+sns.scatterplot(x=df_train['len_of_query'], y=df_train['relevance'], alpha=0.5)
+plt.title("Relevance vs. Query Length")
+plt.xlabel("Length of Search Query")
+plt.ylabel("Relevance Score")
+
+plt.tight_layout()
+plt.show()
 
 y_train = df_train['relevance'].values
 X_train = df_train.drop(['id', 'relevance'], axis=1).values

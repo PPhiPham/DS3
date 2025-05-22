@@ -44,13 +44,13 @@ df_all['word_in_title'] = df_all['product_info'].map(lambda x: str_common_word(x
 df_all['word_in_description'] = df_all['product_info'].map(lambda x: str_common_word(x.split('\t')[0], x.split('\t')[2]))
 df_all['word_in_attr'] = df_all.apply(lambda row: str_common_word(row['search_term'], row['attr_values']), axis=1)
 
-tfidf_vectorizer = TfidfVectorizer(max_features=5000)
-corpus = df_all['search_term'] + " " + df_all['product_title'] + " " + df_all['product_description']
-tfidf_vectorizer.fit(corpus)
-search_term_tfidf = tfidf_vectorizer.transform(df_all['search_term'])
-product_info_tfidf = tfidf_vectorizer.transform(df_all['product_title'] + " " + df_all['product_description'])
+tfidf_vector = TfidfVectorizer(max_features=5000)
+c = df_all['search_term'] + " " + df_all['product_title'] + " " + df_all['product_description']
+tfidf_vector.fit(c)
+st_tfidf = tfidf_vector.transform(df_all['search_term'])
+pi_tfidf = tfidf_vector.transform(df_all['product_title'] + " " + df_all['product_description'])
 df_all['tfidf_cosine_sim'] = [
-    cosine_similarity(search_term_tfidf[i], product_info_tfidf[i])[0][0] for i in range(search_term_tfidf.shape[0])
+    cosine_similarity(st_tfidf[i], pi_tfidf[i])[0][0] for i in range(st_tfidf.shape[0])
 ]
 
 df_all.drop(['search_term', 'product_title', 'product_description', 'product_info', 'attr_values'], axis=1, inplace=True)
@@ -65,10 +65,10 @@ print("Training RandomForestRegressor directly for feature importance...")
 rf_direct = RandomForestRegressor(n_estimators=15, max_depth=6, random_state=0)
 rf_direct.fit(X_train, y_train)
 
-feature_names = df_combined_train.drop(['id', 'relevance'], axis=1).columns
-importances = rf_direct.feature_importances_
-feature_importances = sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)
+feat_nemes = df_combined_train.drop(['id', 'relevance'], axis=1).columns
+importances = rf_direct.feat_import_
+feat_import = sorted(zip(feat_nemes, importances), key=lambda x: x[1], reverse=True)
 
 print("\nTop 5 important features:")
-for feature, importance in feature_importances[:5]:
+for feature, importance in feat_import[:5]:
     print(f"{feature}: {importance:.4f}")

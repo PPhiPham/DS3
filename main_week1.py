@@ -18,30 +18,30 @@ df_test = pd.read_csv('data/test.csv', encoding="ISO-8859-1")
 df_pro_desc = pd.read_csv('data/product_descriptions.csv', encoding="ISO-8859-1")
 print("Datasets loaded")
 
-print("\n############## Data Exploration ##############")
+print("############## Data Exploration ##############")
 
-num_pairs = df_train.shape[0]
-print(f"1. Total product-query pairs: {num_pairs}")
+amount_pairs = df_train.shape[0]
+print(f"1. Total product-query pairs: {amount_pairs}")
 
-unique_products = df_train['product_uid'].nunique()
-print(f"2. Total Unique products: {unique_products}")
+uniq_prod = df_train['product_uid'].nunique()
+print(f"2. Total Unique products: {uniq_prod}")
 
-top_products = df_train['product_uid'].value_counts().head(5)
-print("3. Top 5 most occurring products:")
-for pid, count in top_products.items():
+top_prod = df_train['product_uid'].value_counts().head(5)
+print("3. Top 5 most products:")
+for pid, count in top_prod.items():
     print(f"   - Product UID {pid}: {count} occurrences")
 
 mean_rel = df_train['relevance'].mean()
 median_rel = df_train['relevance'].median()
 std_rel = df_train['relevance'].std()
-print(f"4. Relevance stats -> Mean: {mean_rel:.2f}, Median: {median_rel:.2f}, Std: {std_rel:.2f}")
+print(f"4. Mean: {mean_rel:.2f}, Median: {median_rel:.2f}, Std: {std_rel:.2f}")
 
 df_attr = pd.read_csv('data/attributes.csv', encoding='ISO-8859-1')
 df_attr['name'] = df_attr['name'].str.strip().str.lower()
-brand_names = df_attr[df_attr['name'].str.contains('brand name', na=False)]
-top_brands = brand_names['value'].value_counts().head(5)
+brands = df_attr[df_attr['name'].str.contains('brand name', na=False)]
+top_brands = brands['value'].value_counts().head(5)
 
-print("5. Top 5 most common brand names:")
+print("5. Top 5 most common brands:")
 for brand, count in top_brands.items():
     print(f"   - {brand}: {count} occurrences")
 
@@ -57,28 +57,28 @@ def fast_stem_sentence(s):
 def str_common_word(str1, str2):
     return sum(int(str2.find(word) >= 0) for word in str1.split())
 
-print("Merging train and test data...")
+print("Merging train and test data")
 df_all = pd.concat((df_train, df_test), axis=0, ignore_index=True)
 df_all = pd.merge(df_all, df_pro_desc, how='left', on='product_uid')
-print("Data merged.")
+print("Dat merged")
 
-print("Applying stemming with progress bars...")
+print("Applying stemming with progress bars")
 df_all['search_term'] = df_all['search_term'].progress_apply(fast_stem_sentence)
 df_all['product_title'] = df_all['product_title'].progress_apply(fast_stem_sentence)
 df_all['product_description'] = df_all['product_description'].progress_apply(fast_stem_sentence)
-print("Stemming complete.")
+print("Stemm complete")
 
-print("Engineering features...")
+print("Engineering features")
 df_all['len_of_query'] = df_all['search_term'].map(lambda x: len(x.split())).astype(np.int64)
 df_all['product_info'] = df_all['search_term'] + "\t" + df_all['product_title'] + "\t" + df_all['product_description']
 df_all['word_in_title'] = df_all['product_info'].map(lambda x: str_common_word(x.split('\t')[0], x.split('\t')[1]))
 df_all['word_in_description'] = df_all['product_info'].map(lambda x: str_common_word(x.split('\t')[0], x.split('\t')[2]))
-print("Feature engineering complete.")
+print("Feature engineering complete")
 
-print("Cleaning up text columns...")
+print("Cleaning up")
 df_all.drop(['search_term', 'product_title', 'product_description', 'product_info'], axis=1, inplace=True)
 
-print("Splitting back to train/test sets...")
+print("Splitting back to train/test sets")
 df_train = df_all.iloc[:num_train]
 df_test = df_all.iloc[num_train:]
 id_test = df_test['id']
@@ -102,25 +102,25 @@ X_train = df_train.drop(['id', 'relevance'], axis=1).values
 X_test = df_test.drop(['id', 'relevance'], axis=1).values
 print("Data split complete.")
 
-print("Splitting training set into train/validation for RMSE...")
+print("Splitting training set into train/validation for RMSE")
 X_tr, X_val, y_tr, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-print("Training model on train split...")
-rf = RandomForestRegressor(n_estimators=15, max_depth=6, random_state=0)
-clf = BaggingRegressor(rf, n_estimators=45, max_samples=0.1, random_state=25)
+print("Training model on train split")
+rfr = RandomForestRegressor(n_estimators=15, max_depth=6, random_state=0)
+clf = BaggingRegressor(rfr, n_estimators=45, max_samples=0.1, random_state=25)
 clf.fit(X_tr, y_tr)
 
-print("Predicting on validation set...")
+print("Predicting on validation set")
 y_val_pred = clf.predict(X_val)
 rmse = root_mean_squared_error(y_val, y_val_pred)
 print(f"Validation RMSE: {rmse:.4f}")
 
-print("Retraining model on full training data...")
+print("Retraining model on full training data")
 clf.fit(X_train, y_train)
 
-print("Generating predictions on test set...")
+print("Generating predictions on test set")
 y_pred = clf.predict(X_test)
 
-print("Saving submission file...")
+print("Saving submission file")
 pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv('submission.csv', index=False)
 print("Submission saved as submission.csv")

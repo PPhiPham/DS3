@@ -29,6 +29,7 @@ def str_common_word(str1, str2):
 
 df_attr_grouped = df_attr.groupby("product_uid")["value"].apply(lambda x: " ".join(x.astype(str))).reset_index()
 df_attr_grouped.columns = ['product_uid', 'attr_values']
+
 df_all = pd.concat((df_train, df_test), axis=0, ignore_index=True)
 df_all = pd.merge(df_all, df_pro_desc, how='left', on='product_uid')
 df_all = pd.merge(df_all, df_attr_grouped, how='left', on='product_uid')
@@ -45,8 +46,8 @@ df_all['word_in_description'] = df_all['product_info'].map(lambda x: str_common_
 df_all['word_in_attr'] = df_all.apply(lambda row: str_common_word(row['search_term'], row['attr_values']), axis=1)
 
 tfidf_vector = TfidfVectorizer(max_features=5000)
-c = df_all['search_term'] + " " + df_all['product_title'] + " " + df_all['product_description']
-tfidf_vector.fit(c)
+corpus = df_all['search_term'] + " " + df_all['product_title'] + " " + df_all['product_description']
+tfidf_vector.fit(corpus)
 st_tfidf = tfidf_vector.transform(df_all['search_term'])
 pi_tfidf = tfidf_vector.transform(df_all['product_title'] + " " + df_all['product_description'])
 df_all['tfidf_cosine_sim'] = [
@@ -65,9 +66,9 @@ print("Training RandomForestRegressor directly for feature importance...")
 rf_direct = RandomForestRegressor(n_estimators=15, max_depth=6, random_state=0)
 rf_direct.fit(X_train, y_train)
 
-feat_nemes = df_combined_train.drop(['id', 'relevance'], axis=1).columns
-importances = rf_direct.feat_import_
-feat_import = sorted(zip(feat_nemes, importances), key=lambda x: x[1], reverse=True)
+feat_names = df_combined_train.drop(['id', 'relevance'], axis=1).columns
+importances = rf_direct.feature_importances_
+feat_import = sorted(zip(feat_names, importances), key=lambda x: x[1], reverse=True)
 
 print("\nTop 5 important features:")
 for feature, importance in feat_import[:5]:
